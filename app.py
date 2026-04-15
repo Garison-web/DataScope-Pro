@@ -14,21 +14,35 @@ st.set_page_config(
 # --- CSS Styling ---
 st.markdown("""
 <style>
-    div[data-testid="metric-container"] {
-        background-color: #f0f2f6;
-        border: 1px solid #e0e2e6;
-        padding: 5% 5% 5% 10%;
-        border-radius: 10px;
-        color: white;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        div[data-testid="metric-container"] {
-            background-color: #262730;
-            border-color: #33343c;
-        }
-    }
+/* Background */
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: white;
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background: #020617;
+}
+
+/* KPI Cards */
+div[data-testid="metric-container"] {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    padding: 15px;
+    border-radius: 15px;
+    color: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+/* Headers */
+h1, h2, h3 {
+    color: #e2e8f0;
+}
+
+/* Buttons */
+button {
+    border-radius: 10px !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -112,6 +126,12 @@ def main():
                 pass
 
     # --- Dashboard View ---
+    st.markdown("""
+# 🚀 DataScope Pro
+### Turn Your Data into Insights Instantly
+
+Upload. Analyze. Visualize. Decide.
+""")
     st.title("📊 Data Analysis Dashboard")
     st.markdown("A complete, production-ready dashboard to analyze your datasets.")
     
