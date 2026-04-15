@@ -116,7 +116,7 @@ def main():
 
     # Handle missing values
     num_cols = df.select_dtypes(include=['float64', 'int64']).columns
-    cat_cols = df.select_dtypes(include=['object']).columns
+    cat_cols = df.select_dtypes(include=['object', 'string']).columns
     df[num_cols] = df[num_cols].fillna(0)
     df[cat_cols] = df[cat_cols].fillna('Unknown')
 
@@ -125,7 +125,7 @@ def main():
     filtered_df = df.copy()
     
     # Category Filter
-    categorical_options = df.select_dtypes(include=['object']).columns
+    categorical_options = df.select_dtypes(include=['object', 'string']).columns
     if 'Category' in categorical_options:
         filter_col = 'Category'
     elif len(categorical_options) > 0:
@@ -160,6 +160,8 @@ def main():
                 pass
 
     # --- Dashboard View ---
+
+    
     st.markdown("""
 # 🚀 DataScope Pro
 ### Turn Your Data into Insights Instantly
@@ -200,40 +202,39 @@ Upload. Analyze. Visualize. Decide.
             st.metric("Average Value", f"${avg_order:,.2f}")
         else:
             st.metric("Total Records", f"{len(filtered_df):,}")
+    
+    st.divider()
+    
+    # 2. Charts
+    st.subheader("📈 Trend & Distribution Analysis")
+    chart_col1, chart_col2 = st.columns(2)
+    
+    with chart_col1:
+        # Bar Chart
+        if filter_col and 'Revenue' in filtered_df.columns:
+            st.markdown("#### Revenue by Category")
+            bar_data = filtered_df.groupby(filter_col)['Revenue'].sum().reset_index()
+            fig_bar = px.bar(bar_data, x=filter_col, y='Revenue', color=filter_col, template='plotly_white')
+            st.plotly_chart(fig_bar, width='stretch')
+        elif filter_col:
+            st.markdown(f"#### Count by {filter_col}")
+            bar_data = filtered_df[filter_col].value_counts().reset_index()
+            bar_data.columns = [filter_col, 'Count']
+            fig_bar = px.bar(bar_data, x=filter_col, y='Count', color=filter_col, template='plotly_white')
+            st.plotly_chart(fig_bar, width='stretch')
+    with chart_col2:
+        # Pie Chart
+        if filter_col and 'Revenue' in filtered_df.columns:
+            st.markdown("#### Overall Revenue Distribution")
+            fig_pie = px.pie(filtered_df, names=filter_col, values='Revenue', hole=0.4, template='plotly_white')
+            fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig_pie, width='stretch')
             
-        st.divider()
-        
-        # 2. Charts
-        st.subheader("📈 Trend & Distribution Analysis")
-        chart_col1, chart_col2 = st.columns(2)
-        
-        with chart_col1:
-            # Bar Chart
-            if filter_col and 'Revenue' in filtered_df.columns:
-                st.markdown("#### Revenue by Category")
-                bar_data = filtered_df.groupby(filter_col)['Revenue'].sum().reset_index()
-                fig_bar = px.bar(bar_data, x=filter_col, y='Revenue', color=filter_col, template='plotly_white')
-                st.plotly_chart(fig_bar, use_container_width=True)
-            elif filter_col:
-                st.markdown(f"#### Count by {filter_col}")
-                bar_data = filtered_df[filter_col].value_counts().reset_index()
-                bar_data.columns = [filter_col, 'Count']
-                fig_bar = px.bar(bar_data, x=filter_col, y='Count', color=filter_col, template='plotly_white')
-                st.plotly_chart(fig_bar, use_container_width=True)
-
-        with chart_col2:
-            # Pie Chart
-            if filter_col and 'Revenue' in filtered_df.columns:
-                st.markdown("#### Overall Revenue Distribution")
-                fig_pie = px.pie(filtered_df, names=filter_col, values='Revenue', hole=0.4, template='plotly_white')
-                fig_pie.update_traces(textposition='inside', textinfo='percent+label')
-                st.plotly_chart(fig_pie, use_container_width=True)
-                
-            elif filter_col:
-                st.markdown(f"#### {filter_col} Distribution")
-                fig_pie = px.pie(filtered_df, names=filter_col, hole=0.4, template='plotly_white')
-                fig_pie.update_traces(textposition='inside', textinfo='percent+label')
-                st.plotly_chart(fig_pie, use_container_width=True)
+        elif filter_col:
+            st.markdown(f"#### {filter_col} Distribution")
+            fig_pie = px.pie(filtered_df, names=filter_col, hole=0.4, template='plotly_white')
+            fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig_pie, width='stretch')
 
     with tab2:
         st.subheader("📈 Advanced Analytics")
@@ -246,13 +247,13 @@ Upload. Analyze. Visualize. Decide.
             time_data = filtered_df.groupby(date_col)['Revenue'].sum().reset_index()
             fig_line = px.line(time_data, x=date_col, y='Revenue', markers=True, template='plotly_white')
             fig_line.update_traces(fill='tozeroy', line_color='#4CAF50')
-            st.plotly_chart(fig_line, use_container_width=True)
+            st.plotly_chart(fig_line, width='stretch')
         else:
             st.info("No date columns found for time-series analysis")
 
     with tab3:
         st.subheader("📋 Dataset Preview & Download")
-        st.dataframe(filtered_df.head(50), use_container_width=True)
+        st.dataframe(filtered_df.head(50), width='stretch')
         
         csv_buffer = io.StringIO()
         filtered_df.to_csv(csv_buffer, index=False)
