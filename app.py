@@ -46,6 +46,40 @@ button {
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown("""
+<style>
+/* Background */
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: white;
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background: #020617;
+}
+
+/* KPI Cards */
+div[data-testid="metric-container"] {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    padding: 15px;
+    border-radius: 15px;
+    color: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+/* Headers */
+h1, h2, h3 {
+    color: #e2e8f0;
+}
+
+/* Buttons */
+button {
+    border-radius: 10px !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 def main():
     st.sidebar.header("📁 Data Upload & Filters")
     
