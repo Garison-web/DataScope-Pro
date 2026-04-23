@@ -133,7 +133,7 @@ def build_pdf(filtered_df: pd.DataFrame, filter_col, datetime_cols, ai_insights:
         story.append(Paragraph(f"Revenue by {filter_col}", styles["h2"]))
         bar_data = filtered_df.groupby(filter_col)["Revenue"].sum().reset_index().sort_values("Revenue", ascending=False)
         fig = px.bar(bar_data, x=filter_col, y="Revenue",
-                     color_discrete_sequence=[ACCENT.hexval()[:7].replace("0x", "#")])
+                     color_discrete_sequence=["#06b6d4"])
         fig.update_traces(marker_color="#06b6d4")
         story.append(_fig_to_image_flowable(_styled_fig(fig), width_cm=16, height_cm=7))
         story.append(Spacer(1, 0.4 * cm))
