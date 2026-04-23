@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import io
 from datetime import datetime
+import ai_assistant
 
 st.set_page_config(
     page_title="DataScope Pro",
@@ -617,6 +618,61 @@ def page_reports(filtered_df, match_count=None):
     )
 
 
+def page_ask_ai(filtered_df, match_count=None):
+    render_navbar("Ask Your Data", "Chat with an AI analyst about your dataset", match_count)
+
+    if "ai_chat" not in st.session_state:
+        st.session_state.ai_chat = []
+
+    section_title("Conversation", "💬")
+
+    suggestions = [
+        "What are the top 3 insights in this data?",
+        "Which category drives the most revenue?",
+        "Are there any unusual trends or outliers?",
+        "Summarize the dataset in one paragraph",
+    ]
+    sc1, sc2, sc3, sc4 = st.columns(4)
+    for col, q in zip([sc1, sc2, sc3, sc4], suggestions):
+        with col:
+            if st.button(q, key=f"sug_{q}", width='stretch'):
+                st.session_state.pending_q = q
+
+    chat_box = st.container()
+    with chat_box:
+        if not st.session_state.ai_chat:
+            st.markdown(
+                '<div class="glass-card" style="text-align:center;color:#94a3b8;">'
+                '🤖 Ask anything about your dataset — try one of the suggestions above or type your own question below.'
+                '</div>', unsafe_allow_html=True)
+        for msg in st.session_state.ai_chat:
+            with st.chat_message(msg["role"], avatar="🧑" if msg["role"] == "user" else "🤖"):
+                st.markdown(msg["content"])
+
+    user_q = st.chat_input("Ask a question about your data…")
+    pending = st.session_state.pop("pending_q", None)
+    question = user_q or pending
+
+    if question:
+        st.session_state.ai_chat.append({"role": "user", "content": question})
+        with chat_box:
+            with st.chat_message("user", avatar="🧑"):
+                st.markdown(question)
+            with st.chat_message("assistant", avatar="🤖"):
+                with st.spinner("Analyzing your data…"):
+                    try:
+                        answer = ai_assistant.ask(question, filtered_df)
+                    except Exception as e:
+                        answer = f"⚠️ Error: {e}"
+                st.markdown(answer)
+        st.session_state.ai_chat.append({"role": "assistant", "content": answer})
+
+    if st.session_state.ai_chat:
+        if st.button("🗑️ Clear conversation"):
+            st.session_state.ai_chat = []
+            st.rerun()
+
+
 def page_settings():
     render_navbar("Settings", "Manage your workspace preferences")
 
@@ -682,7 +738,7 @@ def main():
     st.sidebar.markdown('<div class="nav-label">Navigation</div>', unsafe_allow_html=True)
     page = st.sidebar.radio(
         "Navigation",
-        ["📊  Dashboard", "📈  Analytics", "📋  Reports", "⚙️  Settings"],
+        ["📊  Dashboard", "📈  Analytics", "🤖  Ask AI", "📋  Reports", "⚙️  Settings"],
         label_visibility="collapsed"
     )
 
@@ -715,6 +771,8 @@ def main():
         page_dashboard(filtered_df, filter_col, datetime_cols, match_count)
     elif page.strip().startswith("📈"):
         page_analytics(filtered_df, filter_col, datetime_cols, match_count)
+    elif page.strip().startswith("🤖"):
+        page_ask_ai(filtered_df, match_count)
     elif page.strip().startswith("📋"):
         page_reports(filtered_df, match_count)
     else:
