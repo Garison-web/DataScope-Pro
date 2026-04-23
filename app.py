@@ -376,26 +376,41 @@ def style_fig(fig):
     return fig
 
 
-def render_navbar(page_title, page_sub):
-    st.markdown(f"""
-    <div class="top-navbar">
-        <div class="nav-left">
-            <div>
-                <div class="nav-title">{page_title}</div>
-                <div class="nav-sub">{page_sub}</div>
-            </div>
-        </div>
-        <div class="nav-right">
-            <div class="nav-search">🔍 <span>Search metrics, reports…</span></div>
-            <div class="nav-icon-btn">🔔</div>
-            <div class="nav-icon-btn">⚙️</div>
-            <div class="profile-chip">
-                <div class="avatar">DS</div>
-                <div class="profile-name">Data Analyst</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+def render_navbar(page_title, page_sub, match_count=None):
+    badge = ""
+    if match_count is not None:
+        badge = f'<div class="badge cyan" style="margin-left:10px;">{match_count:,} matches</div>'
+    html = (
+        '<div class="top-navbar">'
+        '<div class="nav-left">'
+        '<div>'
+        f'<div class="nav-title">{page_title}</div>'
+        f'<div class="nav-sub">{page_sub}</div>'
+        '</div>'
+        f'{badge}'
+        '</div>'
+        '<div class="nav-right">'
+        '<div class="nav-icon-btn">🔔</div>'
+        '<div class="nav-icon-btn">⚙️</div>'
+        '<div class="profile-chip">'
+        '<div class="avatar">DS</div>'
+        '<div class="profile-name">Data Analyst</div>'
+        '</div>'
+        '</div>'
+        '</div>'
+    )
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def apply_search(df, query):
+    if not query:
+        return df
+    q = query.strip().lower()
+    if not q:
+        return df
+    str_df = df.astype(str).apply(lambda col: col.str.lower())
+    mask = str_df.apply(lambda col: col.str.contains(q, na=False, regex=False)).any(axis=1)
+    return df[mask]
 
 
 def section_title(text, icon=""):
@@ -498,8 +513,8 @@ def render_kpis(filtered_df):
         st.metric("Active Rows", f"{len(filtered_df):,}", f"{len(filtered_df.columns)} cols")
 
 
-def page_dashboard(filtered_df, filter_col, datetime_cols):
-    render_navbar("Dashboard Overview", "Real-time insights from your dataset")
+def page_dashboard(filtered_df, filter_col, datetime_cols, match_count=None):
+    render_navbar("Dashboard Overview", "Real-time insights from your dataset", match_count)
 
     section_title("Key Performance Indicators", "🏆")
     render_kpis(filtered_df)
@@ -545,8 +560,8 @@ def page_dashboard(filtered_df, filter_col, datetime_cols):
         st.plotly_chart(style_fig(fig_line), width='stretch')
 
 
-def page_analytics(filtered_df, filter_col, datetime_cols):
-    render_navbar("Analytics", "Deep-dive analysis & advanced visualizations")
+def page_analytics(filtered_df, filter_col, datetime_cols, match_count=None):
+    render_navbar("Analytics", "Deep-dive analysis & advanced visualizations", match_count)
 
     section_title("Numerical Summary", "🧮")
     num_df = filtered_df.select_dtypes(include=['float64', 'int64'])
@@ -578,8 +593,8 @@ def page_analytics(filtered_df, filter_col, datetime_cols):
         st.plotly_chart(style_fig(fig_line), width='stretch')
 
 
-def page_reports(filtered_df):
-    render_navbar("Reports", "Browse, preview and export your processed data")
+def page_reports(filtered_df, match_count=None):
+    render_navbar("Reports", "Browse, preview and export your processed data", match_count)
 
     c1, c2, c3 = st.columns(3)
     with c1: st.metric("Total Rows", f"{len(filtered_df):,}")
@@ -675,6 +690,14 @@ def main():
     uploaded_file = st.sidebar.file_uploader("Upload CSV", type=["csv"], label_visibility="collapsed")
 
     df, datetime_cols = load_and_prepare(uploaded_file)
+
+    st.sidebar.markdown('<div class="nav-label">Search</div>', unsafe_allow_html=True)
+    search_query = st.sidebar.text_input(
+        "Search", placeholder="🔍  Search any value across rows…",
+        label_visibility="collapsed", key="global_search"
+    )
+
+    df = apply_search(df, search_query)
     filtered_df, filter_col = apply_filters(df, datetime_cols)
 
     st.sidebar.markdown("<br>", unsafe_allow_html=True)
@@ -686,12 +709,14 @@ def main():
         unsafe_allow_html=True
     )
 
+    match_count = len(filtered_df) if search_query else None
+
     if page.strip().startswith("📊"):
-        page_dashboard(filtered_df, filter_col, datetime_cols)
+        page_dashboard(filtered_df, filter_col, datetime_cols, match_count)
     elif page.strip().startswith("📈"):
-        page_analytics(filtered_df, filter_col, datetime_cols)
+        page_analytics(filtered_df, filter_col, datetime_cols, match_count)
     elif page.strip().startswith("📋"):
-        page_reports(filtered_df)
+        page_reports(filtered_df, match_count)
     else:
         page_settings()
 
