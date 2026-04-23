@@ -1,11 +1,40 @@
 import os
 import io
 import time
+import hashlib
 import pandas as pd
 from google import genai
 from google.genai import types
 
 MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"]
+
+_CACHE: dict[str, str] = {}
+_CACHE_ORDER: list[str] = []
+_CACHE_MAX = 64
+
+
+def _cache_key(question: str, df: pd.DataFrame) -> str:
+    sig = f"{df.shape}-{list(df.columns)}-{int(pd.util.hash_pandas_object(df.head(50), index=False).sum())}"
+    return hashlib.sha256(f"{question.strip().lower()}|{sig}".encode()).hexdigest()
+
+
+def _cache_get(key: str):
+    return _CACHE.get(key)
+
+
+def _cache_set(key: str, value: str):
+    if key in _CACHE:
+        return
+    _CACHE[key] = value
+    _CACHE_ORDER.append(key)
+    while len(_CACHE_ORDER) > _CACHE_MAX:
+        old = _CACHE_ORDER.pop(0)
+        _CACHE.pop(old, None)
+
+
+def clear_cache():
+    _CACHE.clear()
+    _CACHE_ORDER.clear()
 
 
 _client = None
@@ -46,7 +75,13 @@ def _dataset_context(df: pd.DataFrame, max_rows: int = 25) -> str:
     return buf.getvalue()
 
 
-def ask(question: str, df: pd.DataFrame) -> str:
+def ask(question: str, df: pd.DataFrame, use_cache: bool = True) -> str:
+    key = _cache_key(question, df)
+    if use_cache:
+        cached = _cache_get(key)
+        if cached is not None:
+            return cached + "\n\n_⚡ cached_"
+
     client = get_client()
     context = _dataset_context(df)
 
@@ -66,7 +101,9 @@ def ask(question: str, df: pd.DataFrame) -> str:
         for attempt in range(3):
             try:
                 response = client.models.generate_content(model=model, contents=prompt)
-                return response.text or "I couldn't generate a response. Please try rephrasing."
+                answer = response.text or "I couldn't generate a response. Please try rephrasing."
+                _cache_set(key, answer)
+                return answer
             except Exception as e:
                 last_err = e
                 msg = str(e)

@@ -708,10 +708,15 @@ def page_ask_ai(filtered_df, match_count=None):
                 st.markdown(answer)
         st.session_state.ai_chat.append({"role": "assistant", "content": answer})
 
-    if st.session_state.ai_chat:
-        if st.button("🗑️ Clear conversation"):
+    cols = st.columns([1, 1, 6])
+    with cols[0]:
+        if st.session_state.ai_chat and st.button("🗑️ Clear chat"):
             st.session_state.ai_chat = []
             st.rerun()
+    with cols[1]:
+        if st.button("⚡ Clear cache"):
+            ai_assistant.clear_cache()
+            st.toast("AI response cache cleared.")
 
 
 def page_settings():
