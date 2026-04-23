@@ -1,8 +1,11 @@
 import os
 import io
+import time
 import pandas as pd
 from google import genai
 from google.genai import types
+
+MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"]
 
 
 _client = None
@@ -58,8 +61,23 @@ def ask(question: str, df: pd.DataFrame) -> str:
 
     prompt = f"{system_prompt}\n\n=== DATASET ===\n{context}\n\n=== QUESTION ===\n{question}"
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
+    last_err = None
+    for model in MODELS:
+        for attempt in range(3):
+            try:
+                response = client.models.generate_content(model=model, contents=prompt)
+                return response.text or "I couldn't generate a response. Please try rephrasing."
+            except Exception as e:
+                last_err = e
+                msg = str(e)
+                if "503" in msg or "UNAVAILABLE" in msg or "overloaded" in msg.lower():
+                    time.sleep(1.5 * (attempt + 1))
+                    continue
+                if "429" in msg or "RESOURCE_EXHAUSTED" in msg:
+                    time.sleep(2.0 * (attempt + 1))
+                    continue
+                break
+    raise RuntimeError(
+        "Gemini is temporarily overloaded across all fallback models. "
+        f"Please try again in a moment. (Last error: {last_err})"
     )
-    return response.text or "I couldn't generate a response. Please try rephrasing."
