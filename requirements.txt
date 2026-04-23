@@ -2,3 +2,6 @@ streamlit
 pandas
 plotly
 google-genai
+kaleido==0.2.1
+reportlab
+sift-stack-py

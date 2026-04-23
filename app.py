@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import io
 from datetime import datetime
 import ai_assistant
+import pdf_report
 
 st.set_page_config(
     page_title="DataScope Pro",
@@ -594,7 +595,7 @@ def page_analytics(filtered_df, filter_col, datetime_cols, match_count=None):
         st.plotly_chart(style_fig(fig_line), width='stretch')
 
 
-def page_reports(filtered_df, match_count=None):
+def page_reports(filtered_df, filter_col, datetime_cols, match_count=None):
     render_navbar("Reports", "Browse, preview and export your processed data", match_count)
 
     c1, c2, c3 = st.columns(3)
@@ -605,17 +606,57 @@ def page_reports(filtered_df, match_count=None):
         st.metric("Memory", f"{size_kb:,.1f} KB")
 
     st.markdown("<br>", unsafe_allow_html=True)
+    section_title("Export Report", "📤")
+
+    e1, e2 = st.columns([1, 1])
+    with e1:
+        csv_buffer = io.StringIO()
+        filtered_df.to_csv(csv_buffer, index=False)
+        st.download_button(
+            label="📥  Download CSV",
+            data=csv_buffer.getvalue(),
+            file_name=f"datascope_export_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+            mime="text/csv",
+            width='stretch',
+        )
+
+    with e2:
+        include_ai = st.checkbox("Include AI insights in PDF", value=True,
+                                 help="Auto-generates a fresh AI summary for the report")
+
+        if st.button("📄  Generate PDF Report", width='stretch', key="gen_pdf"):
+            with st.spinner("Building your PDF report…"):
+                ai_text = ""
+                if include_ai:
+                    try:
+                        ai_text = ai_assistant.ask(
+                            "Give a concise executive summary of this dataset: top trends, "
+                            "best/worst performers, and 2-3 actionable recommendations. "
+                            "Use bullet points.",
+                            filtered_df,
+                        )
+                    except Exception as e:
+                        ai_text = f"AI insights unavailable: {e}"
+                try:
+                    pdf_bytes = pdf_report.build_pdf(filtered_df, filter_col, datetime_cols, ai_text)
+                    st.session_state["pdf_bytes"] = pdf_bytes
+                    st.session_state["pdf_name"] = f"datascope_report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+                    st.success("PDF ready! Click the download button below.")
+                except Exception as e:
+                    st.error(f"PDF generation failed: {e}")
+
+        if "pdf_bytes" in st.session_state:
+            st.download_button(
+                label="⬇️  Download PDF Report",
+                data=st.session_state["pdf_bytes"],
+                file_name=st.session_state.get("pdf_name", "report.pdf"),
+                mime="application/pdf",
+                width='stretch',
+            )
+
+    st.markdown("<br>", unsafe_allow_html=True)
     section_title("Dataset Preview", "📋")
     st.dataframe(filtered_df.head(100), width='stretch', height=420)
-
-    csv_buffer = io.StringIO()
-    filtered_df.to_csv(csv_buffer, index=False)
-    st.download_button(
-        label="📥 Download Processed Dataset (CSV)",
-        data=csv_buffer.getvalue(),
-        file_name=f"datascope_export_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
-        mime="text/csv",
-    )
 
 
 def page_ask_ai(filtered_df, match_count=None):
@@ -774,7 +815,7 @@ def main():
     elif page.strip().startswith("🤖"):
         page_ask_ai(filtered_df, match_count)
     elif page.strip().startswith("📋"):
-        page_reports(filtered_df, match_count)
+        page_reports(filtered_df, filter_col, datetime_cols, match_count)
     else:
         page_settings()
 
