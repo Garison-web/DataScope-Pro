@@ -529,13 +529,15 @@ def page_dashboard(filtered_df, filter_col, datetime_cols, match_count=None):
         if filter_col and 'Revenue' in filtered_df.columns:
             bar_data = filtered_df.groupby(filter_col)['Revenue'].sum().reset_index().sort_values('Revenue', ascending=False)
             fig_bar = px.bar(bar_data, x=filter_col, y='Revenue', title=f"Revenue by {filter_col}",
-                             color='Revenue', color_continuous_scale=['#3b82f6', '#06b6d4', '#22d3ee'])
+                             color='Revenue',
+                             color_continuous_scale=[[0.0, '#3b82f6'], [0.5, '#06b6d4'], [1.0, '#22d3ee']])
             st.plotly_chart(style_fig(fig_bar), width='stretch')
         elif filter_col:
             bar_data = filtered_df[filter_col].value_counts().reset_index()
             bar_data.columns = [filter_col, 'Count']
             fig_bar = px.bar(bar_data, x=filter_col, y='Count', title=f"Count by {filter_col}",
-                             color='Count', color_continuous_scale=['#3b82f6', '#06b6d4', '#22d3ee'])
+                             color='Count',
+                             color_continuous_scale=[[0.0, '#3b82f6'], [0.5, '#06b6d4'], [1.0, '#22d3ee']])
             st.plotly_chart(style_fig(fig_bar), width='stretch')
 
     with chart_col2:
