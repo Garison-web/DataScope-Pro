@@ -5,5 +5,4 @@ plotly
 matplotlib
 google-genai
 reportlab
-gunicorn
 python-dotenv
