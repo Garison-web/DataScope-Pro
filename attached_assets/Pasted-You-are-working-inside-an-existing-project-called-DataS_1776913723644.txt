@@ -1,0 +1,88 @@
+You are working inside an existing project called "DataScope Pro".
+
+The project is already loaded. Your job is to COMPLETELY UPGRADE the UI/UX without breaking functionality.
+
+========================
+🔍 STEP 1: ANALYZE CODE
+=======================
+
+* Scan all frontend files (HTML, CSS, JS / Streamlit / React)
+* Identify current UI structure
+* DO NOT delete backend logic or data processing
+
+========================
+🎯 STEP 2: FULL UI REDESIGN
+===========================
+
+Rewrite the UI into a modern SaaS dashboard with:
+
+* Dark theme
+* Sidebar navigation (Dashboard, Analytics, Reports, Settings)
+* Top navbar (search + profile)
+* KPI cards (3–4 metrics)
+* Charts section
+* Clean spacing and layout
+
+========================
+🎨 DESIGN STYLE
+===============
+
+* Background: dark (#0f172a / slate-900)
+* Cards: glassmorphism (blur + transparency)
+* Accent: cyan / blue gradients
+* Rounded corners (xl / 2xl)
+* Smooth hover effects
+
+========================
+⚙️ IF USING STREAMLIT
+=====================
+
+* Inject custom CSS using st.markdown
+* Create reusable card components
+* Use columns for layout
+* Improve fonts, colors, spacing
+
+========================
+⚙️ IF USING HTML/CSS
+====================
+
+* Replace old CSS completely
+* Use Flexbox/Grid layout
+* Add sidebar + dashboard layout
+
+========================
+⚙️ IF USING REACT
+=================
+
+* Break UI into components:
+  Sidebar, Navbar, Card, Dashboard
+* Use Tailwind CSS
+* Clean component structure
+
+========================
+✨ ADD FEATURES
+==============
+
+* Hover animations on cards
+* Better typography
+* Icons (Lucide or Heroicons)
+* Optional: charts using Chart.js or Recharts
+
+========================
+🚫 IMPORTANT RULES
+==================
+
+* DO NOT break existing functionality
+* DO NOT remove backend logic
+* Only improve UI layer
+* Keep everything working
+
+========================
+📦 OUTPUT
+=========
+
+* Modify existing files directly
+* Show which files were updated
+* Keep code clean and modular
+
+Now start improving the UI step by step.
