@@ -1,8 +1,4 @@
 modules = ["python-3.11"]
-[agent]
-expertMode = true
-stack = "BEST_EFFORT_FALLBACK"
-integrations = ["python_gemini:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
@@ -26,7 +22,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0"
+args = "gunicorn server:app --bind 0.0.0.0:5000 --workers 2"
 waitForPort = 5000
 
 [workflows.workflow.metadata]
@@ -38,4 +34,4 @@ externalPort = 80
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["streamlit", "run", "app.py", "--server.port", "5000", "--server.address", "0.0.0.0"]
+run = ["gunicorn", "server:app", "--bind", "0.0.0.0:5000", "--workers", "2"]

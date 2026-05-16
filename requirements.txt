@@ -2,7 +2,8 @@ flask
 flask-cors
 pandas
 plotly
+matplotlib
 google-genai
-kaleido==0.2.1
 reportlab
 gunicorn
+python-dotenv
